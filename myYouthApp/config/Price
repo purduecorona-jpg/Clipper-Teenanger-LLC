@@ -1,0 +1,64 @@
+const Stripe = require("stripe");
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+const User = require("../models/User");
+const Subscription = require("../models/Subscription");
+
+/**
+ * Create Stripe checkout session for a user
+ * @param {String} userId - MongoDB User ID
+ * @param {String} priceId - Stripe price ID (Silver, Premium, Monster)
+ * @param {String} successUrl - URL after successful payment
+ * @param {String} cancelUrl - URL if user cancels payment
+ */
+const createCheckoutSession = async (userId, priceId, successUrl, cancelUrl) => {
+  const user = await User.findById(userId);
+  if (!user) throw new Error("User not found");
+
+  if (user.age < 13) throw new Error("User must be at least 13 years old");
+  if (!user.parentConsent) throw new Error("Parent consent is required");
+
+  const session = await stripe.checkout.sessions.create({
+    mode: "subscription",
+    payment_method_types: ["card"],
+    customer_email: user.email,
+    line_items: [{ price: priceId, quantity: 1 }],
+    success_url: successUrl + "?session_id={CHECKOUT_SESSION_ID}",
+    cancel_url: cancelUrl,
+    metadata: {
+      userId: user._id.toString()
+    }
+  });
+
+  return session;
+};
+
+/**
+ * Handle Stripe webhook events
+ */
+const handleStripeWebhook = async (event) => {
+  switch (event.type) {
+    case "checkout.session.completed":
+      const session = event.data.object;
+      const userId = session.metadata.userId;
+      const priceId = session.line_items?.data?.[0]?.price?.id || session.display_items?.[0]?.price?.id;
+
+      // Map priceId to Subscription in DB
+      const subscription = await Subscription.findOne({ price_id: priceId });
+      if (!subscription) return;
+
+      // Update user subscription
+      await User.findByIdAndUpdate(userId, { subscription: subscription._id });
+
+      console.log(`User ${userId} subscribed to ${subscription.name}`);
+      break;
+
+    case "invoice.payment_failed":
+      console.log("Payment failed:", event.data.object);
+      break;
+
+    default:
+      console.log("Unhandled event type:", event.type);
+  }
+};
+
+module.exports = { stripe, createCheckoutSession, handleStripeWebhook };
