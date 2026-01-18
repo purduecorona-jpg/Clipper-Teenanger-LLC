@@ -1,0 +1,5 @@
+cd backend
+npm install
+cp .env.example .env
+# Wpisz swoje STRIPE_SECRET_KEY i MONGO_URI
+npm run dev
