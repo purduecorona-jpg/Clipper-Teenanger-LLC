@@ -1,0 +1,26 @@
+myYouthApp/
+│
+├─ backend/
+│   ├─ server.js
+│   ├─ package.json
+│   ├─ .env.example
+│   ├─ config/
+│   │   └─ db.js
+│   ├─ models/
+│   │   ├─ User.js
+│   │   ├─ Post.js
+│   │   ├─ Comment.js
+│   │   ├─ Message.js
+│   │   └─ Subscription.js
+│   ├─ routes/
+│   │   ├─ auth.js
+│   │   ├─ posts.js
+│   │   ├─ comments.js
+│   │   ├─ chat.js
+│   │   └─ subscriptions.js
+│   └─ utils/
+│       └─ stripe.js
+│
+├─ frontend/
+│   ├─ App.js
+│   ├─ package
