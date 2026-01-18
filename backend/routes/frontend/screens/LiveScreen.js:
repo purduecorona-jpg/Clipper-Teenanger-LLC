@@ -1,0 +1,34 @@
+import React, { useContext, useState } from "react";
+import { View, Text, Button, Alert } from "react-native";
+import axios from "axios";
+import { AuthContext } from "../context/AuthContext";
+
+export default function LiveScreen() {
+  const { token, user } = useContext(AuthContext);
+  const [streamUrl, setStreamUrl] = useState(null);
+
+  const startLive = async () => {
+    if (user.subscriptionName !== "Monster") {
+      return Alert.alert("Ograniczenie", "Tylko pakiet Monster może prowadzić transmisję live.");
+    }
+
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/live/start",
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setStreamUrl(res.data.url);
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Błąd", "Nie udało się rozpocząć live.");
+    }
+  };
+
+  return (
+    <View style={{ flex: 1, padding: 20 }}>
+      <Button title="Rozpocznij transmisję Live" onPress={startLive} />
+      {streamUrl && <Text style={{ marginTop: 20 }}>Twoja transmisja: {streamUrl}</Text>}
+    </View>
+  );
+}
