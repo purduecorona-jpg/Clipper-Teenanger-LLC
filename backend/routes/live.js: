@@ -1,0 +1,27 @@
+const express = require("express");
+const router = express.Router();
+const authMiddleware = require("../middleware/auth");
+
+// Endpoint do rozpoczęcia transmisji live
+router.post("/start", authMiddleware, async (req, res) => {
+  const user = req.user;
+
+  if (user.subscriptionName !== "Monster") {
+    return res.status(403).json({ error: "Tylko pakiet Monster może prowadzić live" });
+  }
+
+  try {
+    // Tutaj tworzymy prosty token lub identyfikator sesji live
+    const liveSession = {
+      streamId: `live_${Date.now()}`,
+      host: user.username,
+      url: `https://example-stream-server.com/live/${user._id}_${Date.now()}`
+    };
+
+    res.json(liveSession);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+module.exports = router;
