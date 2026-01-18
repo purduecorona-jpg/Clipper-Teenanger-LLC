@@ -1,0 +1,53 @@
+const express = require("express");
+const router = express.Router();
+const Post = require("../models/Post");
+const { bucket } = require("../config/firebase");
+const multer = require("multer");
+const upload = multer({ storage: multer.memoryStorage() });
+const User = require("../models/User");
+
+// Pobierz wszystkie posty
+router.get("/", async (req, res) => {
+  try {
+    const posts = await Post.find().populate("author", "username");
+    res.json(posts);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Dodaj nowy post (tylko dla Premium/Monster)
+router.post("/", upload.single("file"), async (req, res) => {
+  try {
+    const user = await User.findById(req.body.userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    if (!["Premium", "Monster"].includes(user.subscriptionName)) {
+      return res.status(403).json({ error: "Subskrypcja nie pozwala na dodawanie wideo" });
+    }
+
+    // Upload do Firebase
+    const file = bucket.file(Date.now() + "_" + req.file.originalname);
+    const stream = file.createWriteStream({ metadata: { contentType: req.file.mimetype } });
+
+    stream.on("error", (err) => res.status(500).send(err));
+    stream.on("finish", async () => {
+      await file.makePublic();
+      const type = req.file.mimetype.startsWith("video") ? "video" : "image";
+      const post = new Post({
+        type,
+        url: file.publicUrl(),
+        author: user._id
+      });
+      await post.save();
+      res.json(post);
+    });
+
+    stream.end(req.file.buffer);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send(err);
+  }
+});
+
+module.exports = router;
