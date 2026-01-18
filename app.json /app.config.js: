@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "Clipper Teenager",
+    "slug": "clipper-teenager",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "platforms": ["ios", "android"],
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "updates": { "fallbackToCacheTimeout": 0 },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.twojafirma.clipperteenager"
+    },
+    "android": {
+      "package": "com.twojafirma.clipperteenager",
+      "versionCode": 1
+    }
+  }
+}
