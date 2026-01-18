@@ -1,0 +1,25 @@
+const express = require("express");
+const router = express.Router();
+const authMiddleware = require("../middleware/auth");
+const User = require("../models/User");
+
+// Dodaj punkty za upload / like
+router.post("/add-points", authMiddleware, async (req, res) => {
+  const user = req.user;
+  const { points } = req.body;
+
+  if (!["Premium", "Monster"].includes(user.subscriptionName)) {
+    return res.status(403).json({ error: "Gamifikacja dostępna tylko dla Premium/Monster" });
+  }
+
+  try {
+    user.points = (user.points || 0) + points;
+    user.level = Math.floor(user.points / 100) + 1; // np. 100 pkt = 1 level
+    await user.save();
+    res.json({ points: user.points, level: user.level });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+module.exports = r
